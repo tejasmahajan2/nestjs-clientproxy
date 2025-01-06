@@ -1,0 +1,1 @@
+export const MATH_SERVICE = "math_service";
