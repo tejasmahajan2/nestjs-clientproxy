@@ -2,7 +2,7 @@ import { Controller, Get, Inject, Logger, OnApplicationBootstrap } from '@nestjs
 import { AppService } from './app.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { MATH_SERVICE } from './constants/variables.contants';
-import { Observable, timeout } from 'rxjs';
+import { firstValueFrom, lastValueFrom, Observable, timeout } from 'rxjs';
 
 @Controller()
 export class AppController implements OnApplicationBootstrap {
@@ -41,8 +41,18 @@ export class AppController implements OnApplicationBootstrap {
   }
 
   @Get('message')
-  publishMessage(): string {
-    this.accumulate();
+  async publishMessage(): Promise<string> {
+    // Implicitly subscribing the cold observable using firstValueFrom or lastValueFrom
+    // const result = await firstValueFrom(this.accumulate())
+
+    // Explicitly subscribing the cold observable using subscribe method
+    // const result = this.accumulate().subscribe({
+    //   next: (data) => console.log('Response:', data), // Handle the response
+    //   error: (err) => console.error('Error:', err),  // Handle errors
+    //   complete: () => console.log('Complete'),      // When the stream is done
+    // });
+
+    // console.log({ result });
     return "Message sent successfully!";
   }
 
