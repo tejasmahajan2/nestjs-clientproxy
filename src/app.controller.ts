@@ -1,19 +1,21 @@
 import { Controller, Get, Inject, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ClientProxy } from '@nestjs/microservices';
-import { MATH_SERVICE } from './constants/variables.contants';
-import { firstValueFrom, lastValueFrom, Observable, timeout } from 'rxjs';
+import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
+import { firstValueFrom, Observable, timeout } from 'rxjs';
 
 @Controller()
 export class AppController implements OnApplicationBootstrap {
   private readonly loggger = new Logger(AppController.name);
   constructor(
     private readonly appService: AppService,
-    @Inject(MATH_SERVICE) private client: ClientProxy
+    @Inject(MATH_SERVICE) private client: ClientProxy,
+    @Inject(REDIS_SERVICE) private redisClient: ClientProxy
   ) { }
 
   async onApplicationBootstrap() {
     await this.client.connect();
+    await this.redisClient.connect();
     this.loggger.log("Connected to microservice.");
   }
 
@@ -43,7 +45,7 @@ export class AppController implements OnApplicationBootstrap {
   @Get('message')
   async publishMessage(): Promise<string> {
     // Implicitly subscribing the cold observable using firstValueFrom or lastValueFrom
-    // const result = await firstValueFrom(this.accumulate())
+    const result = await firstValueFrom(this.accumulate())
 
     // Explicitly subscribing the cold observable using subscribe method
     // const result = this.accumulate().subscribe({
@@ -52,7 +54,7 @@ export class AppController implements OnApplicationBootstrap {
     //   complete: () => console.log('Complete'),      // When the stream is done
     // });
 
-    // console.log({ result });
+    console.log({ result });
     return "Message sent successfully!";
   }
 
@@ -61,4 +63,20 @@ export class AppController implements OnApplicationBootstrap {
     this.publish();
     return "Event published successfully!";
   }
+
+  sendNotification(): Observable<number> {
+    const pattern = { cmd: 'sendNotification' };
+    const payload = [1, 2, 3];
+    return this.redisClient
+      .send<number>(pattern, payload)
+      .pipe(timeout(3000));
+  }
+
+  @Get('notification')
+  async pubishNotification() {
+    const result = await firstValueFrom(this.sendNotification())
+    console.log({ result });
+    return "notification sent successfully!";
+  }
+
 }
