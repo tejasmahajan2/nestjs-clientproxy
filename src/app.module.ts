@@ -32,7 +32,6 @@ import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
         inject: [ConfigService],
       },
     ]),
-
   ],
   controllers: [AppController],
   providers: [AppService],

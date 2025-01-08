@@ -2,7 +2,7 @@ import { Controller, Get, Inject, Logger, OnApplicationBootstrap } from '@nestjs
 import { AppService } from './app.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
-import { firstValueFrom, Observable, timeout } from 'rxjs';
+import { firstValueFrom, lastValueFrom, Observable, timeout } from 'rxjs';
 
 @Controller()
 export class AppController implements OnApplicationBootstrap {
@@ -76,6 +76,18 @@ export class AppController implements OnApplicationBootstrap {
     }
   }
 
+  add(): Observable<number> {
+    const pattern = { cmd: 'add' };
+    const payload = [1, 2, 3];
+    try {    
+      return this.redisClient
+        .send<number>(pattern, payload)
+        .pipe(timeout(15000));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
 
   async publishToRedis() {
     this.redisClient
@@ -90,9 +102,18 @@ export class AppController implements OnApplicationBootstrap {
   @Get('notification')
   async pubishNotification() {
     this.publishToRedis()
-    const result = await firstValueFrom(this.sendNotification())
-    console.log({ result });
+    const result1 = await firstValueFrom(this.sendNotification())
+    const result2 = await lastValueFrom(this.add())
+    console.log({ result1, result2 });
     return "notification event published successfully!";
   }
+
+  @Get('add')
+  async publishAdd() {
+    const result2 = await lastValueFrom(this.add())
+    console.log({ result2 });
+    return "notification event published successfully!";
+  }
+
 
 }
