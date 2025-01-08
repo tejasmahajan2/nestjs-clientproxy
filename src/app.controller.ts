@@ -65,18 +65,34 @@ export class AppController implements OnApplicationBootstrap {
   }
 
   sendNotification(): Observable<number> {
-    const pattern = { cmd: 'sendNotification' };
+    const pattern = { cmd: 'notifications' };
     const payload = [1, 2, 3];
-    return this.redisClient
-      .send<number>(pattern, payload)
+    try {
+      return this.redisClient
+        .send<number>(pattern, payload)
+        .pipe(timeout(15000));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  async publishToRedis() {
+    this.redisClient
+      .emit<number>('user_created', {
+        email: "test@gmail.com",
+        name: "Test User",
+        sub: "Welcome to Microservice!"
+      })
       .pipe(timeout(3000));
   }
 
   @Get('notification')
   async pubishNotification() {
+    this.publishToRedis()
     const result = await firstValueFrom(this.sendNotification())
     console.log({ result });
-    return "notification sent successfully!";
+    return "notification event published successfully!";
   }
 
 }

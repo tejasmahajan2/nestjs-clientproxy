@@ -15,7 +15,7 @@ import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
           transport: Transport.TCP,
           options: {
             host: configService.get<string>('MATH_SERVICE_HOST'),
-            port: configService.get<number>('MATH_SERVICE_PORT'),
+            port: +configService.get<number>('MATH_SERVICE_PORT'),
           },
         }),
         inject: [ConfigService],
@@ -26,7 +26,7 @@ import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
           transport: Transport.REDIS,
           options: {
             host: configService.get<string>('REDIS_SERVICE_HOST'),
-            port: configService.get<number>('REDIS_SERVICE_PORT'),
+            port: +configService.get<number>('REDIS_SERVICE_PORT') || 6379,
           },
         }),
         inject: [ConfigService],
