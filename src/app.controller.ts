@@ -1,7 +1,7 @@
 import { Controller, Get, Inject, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ClientProxy } from '@nestjs/microservices';
-import { MATH_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
+import { MATH_SERVICE, MQTT_SERVICE, REDIS_SERVICE } from './constants/variables.contants';
 import { firstValueFrom, lastValueFrom, Observable, timeout } from 'rxjs';
 
 @Controller()
@@ -10,12 +10,14 @@ export class AppController implements OnApplicationBootstrap {
   constructor(
     private readonly appService: AppService,
     @Inject(MATH_SERVICE) private client: ClientProxy,
-    @Inject(REDIS_SERVICE) private redisClient: ClientProxy
+    @Inject(REDIS_SERVICE) private redisClient: ClientProxy,
+    @Inject(MQTT_SERVICE) private mqttClient: ClientProxy,
   ) { }
 
   async onApplicationBootstrap() {
     await this.client.connect();
-    await this.redisClient.connect();
+    // await this.redisClient.connect();
+    await this.mqttClient.connect();
     this.loggger.log("Connected to microservice.");
   }
 
@@ -79,7 +81,7 @@ export class AppController implements OnApplicationBootstrap {
   add(): Observable<number> {
     const pattern = { cmd: 'add' };
     const payload = [1, 2, 3];
-    try {    
+    try {
       return this.redisClient
         .send<number>(pattern, payload)
         .pipe(timeout(15000));
@@ -113,6 +115,13 @@ export class AppController implements OnApplicationBootstrap {
     const result2 = await lastValueFrom(this.add())
     console.log({ result2 });
     return "notification event published successfully!";
+  }
+
+  @Get('getNotifications')
+  async getNotifications() {
+    const result2 = await lastValueFrom(this.mqttClient.send('notifications', [1, 2, 3]))
+    console.log({ result2 });
+    return "getNotifications event published successfully!";
   }
 
 
